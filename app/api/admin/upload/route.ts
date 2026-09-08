@@ -17,9 +17,16 @@ export async function POST(req: Request) {
   const ext = (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "");
   const name = `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
-
-  return NextResponse.json({ url: `/uploads/${name}` });
+  try {
+    const dir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, name), bytes);
+    return NextResponse.json({ url: `/uploads/${name}` });
+  } catch {
+    // Serverless hosts (e.g. Vercel) have a read-only filesystem.
+    return NextResponse.json(
+      { error: "העלאת קבצים אינה זמינה בשרת זה. אנא הדביקו קישור (URL) לתמונה." },
+      { status: 501 }
+    );
+  }
 }
