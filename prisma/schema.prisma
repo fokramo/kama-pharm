@@ -1,0 +1,69 @@
+// Prisma schema for Kama Pharm (קמא פארם)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String // Hebrew name
+  slug      String    @unique
+  icon      String? // emoji or lucide icon name
+  image     String?
+  order     Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  price       Float
+  compareAt   Float? // original (pre-discount) price
+  image       String?
+  stock       Int      @default(0)
+  sku         String?
+  active      Boolean  @default(true)
+  featured    Boolean  @default(false)
+  requiresRx  Boolean  @default(false) // requires a prescription
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Customer {
+  id               String   @id @default(cuid())
+  name             String
+  email            String   @unique
+  passwordHash     String
+  phone            String?
+  city             String?
+  address          String?
+  marketingConsent Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  orders           Order[]
+}
+
+model Order {
+  id           Int      @id @default(autoincrement()) // also the human order number
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+  customerName String
+  phone        String
+  email        String?
+  city         String
+  address      String
+  notes        String?
+  items        String // JSON array of { id, name, price, qty }
+  subtotal     Float
+  shipping     Float    @default(0)
+  total        Float
+  status       String   @default("pending") // pending | paid | processing | delivered | cancelled
+  paymentRef   String?
+  createdAt    DateTime @default(now())
+}
