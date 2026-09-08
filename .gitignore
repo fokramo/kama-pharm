@@ -47,3 +47,6 @@ next-env.d.ts
 # uploaded product images (user content)
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# keep the example env (no secrets)
+!.env.example
