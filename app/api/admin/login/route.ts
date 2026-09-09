@@ -3,14 +3,20 @@ import { createSession, setSessionCookie } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const { username, email, password } = await req.json().catch(() => ({}));
-  const okUser = process.env.ADMIN_USERNAME ?? "admin";
-  const okEmail = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
-  const okPass = process.env.ADMIN_PASSWORD ?? "kama2026";
+  // Fall back to defaults when the env var is missing OR empty, and trim
+  // stray whitespace/newlines that can sneak in when pasting into a host.
+  const okUser = (process.env.ADMIN_USERNAME || "admin").trim();
+  const okEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const okPass = (process.env.ADMIN_PASSWORD || "kama2026").trim();
 
-  const emailOk = !okEmail || String(email ?? "").trim().toLowerCase() === okEmail;
+  const inUser = String(username ?? "").trim();
+  const inEmail = String(email ?? "").trim().toLowerCase();
+  const inPass = String(password ?? "").trim();
 
-  if (username === okUser && emailOk && password === okPass) {
-    const token = await createSession(username);
+  const emailOk = !okEmail || inEmail === okEmail;
+
+  if (inUser === okUser && emailOk && inPass === okPass) {
+    const token = await createSession(okUser);
     await setSessionCookie(token);
     return NextResponse.json({ ok: true });
   }
