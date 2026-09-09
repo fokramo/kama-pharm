@@ -21,15 +21,26 @@ export const metadata: Metadata = {
     "קמא פארם — בית מרקחת אונליין: תרופות ללא מרשם, ויטמינים, טיפוח, תינוקות ועוד. משלוח עד הבית ותשלום מאובטח בכרטיס אשראי.",
 };
 
+// The layout reads categories from the DB, so render dynamically per request
+// instead of prerendering at build time (avoids build-time DB dependency).
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const categories = await prisma.category.findMany({
-    orderBy: { order: "asc" },
-    select: { name: true, slug: true, icon: true },
-  });
+  let categories: { name: string; slug: string; icon: string | null }[] = [];
+  try {
+    categories = await prisma.category.findMany({
+      orderBy: { order: "asc" },
+      select: { name: true, slug: true, icon: true },
+    });
+  } catch {
+    // DB unavailable (e.g. missing DATABASE_URL) — render without the nav bar
+    // rather than crashing every page.
+    categories = [];
+  }
 
   return (
     <html lang="he" dir="rtl" className={`${rubik.variable}`}>
