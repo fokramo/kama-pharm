@@ -27,15 +27,35 @@ export async function getCustomerSession(): Promise<{ id: string; email: string 
   }
 }
 
-export async function setCustomerCookie(token: string) {
+export async function setCustomerCookie(token: string, remember = true) {
   const store = await cookies();
   store.set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    // "remember me": persist 30 days; otherwise a session cookie (cleared on browser close)
+    ...(remember ? { maxAge: 60 * 60 * 24 * 30 } : {}),
   });
+}
+
+// Short-lived token for password reset links.
+export async function createResetToken(id: string) {
+  return new SignJWT({ id, type: "reset" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30m")
+    .sign(secret);
+}
+
+export async function verifyResetToken(token: string): Promise<{ id: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    if (payload.type !== "reset") return null;
+    return { id: String(payload.id) };
+  } catch {
+    return null;
+  }
 }
 
 export async function clearCustomerCookie() {

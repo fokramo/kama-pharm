@@ -56,6 +56,36 @@ function buildHtml(order: OrderLite): string {
   </div>`;
 }
 
+export async function sendPasswordReset(email: string, name: string, url: string): Promise<boolean> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return false;
+  const from = process.env.EMAIL_FROM || "Kama Pharm <onboarding@resend.dev>";
+  const html = `
+  <div dir="rtl" style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:auto;color:#0f172a">
+    <div style="background:linear-gradient(135deg,#10b981,#047857);color:#fff;padding:22px;border-radius:14px 14px 0 0">
+      <h1 style="margin:0;font-size:20px">קמא פארם — איפוס סיסמה</h1>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-top:none;padding:24px;border-radius:0 0 14px 14px">
+      <p>שלום ${name},</p>
+      <p>קיבלנו בקשה לאיפוס הסיסמה שלך. לחצו על הכפתור כדי לבחור סיסמה חדשה (הקישור תקף ל-30 דקות):</p>
+      <p style="text-align:center;margin:24px 0">
+        <a href="${url}" style="background:#059669;color:#fff;padding:12px 26px;border-radius:999px;text-decoration:none;font-weight:700">איפוס סיסמה</a>
+      </p>
+      <p style="font-size:13px;color:#64748b">אם לא ביקשתם זאת, אפשר להתעלם מהודעה זו.</p>
+    </div>
+  </div>`;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [email], subject: "איפוס סיסמה — קמא פארם", html }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function sendOrderEmails(order: OrderLite): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return; // email not configured yet — skip silently

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createCustomerSession, setCustomerCookie } from "@/lib/customer";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json().catch(() => ({}));
+  const { email, password, remember } = await req.json().catch(() => ({}));
   if (!email || !password) {
     return NextResponse.json({ error: "נא להזין אימייל וסיסמה" }, { status: 400 });
   }
@@ -14,6 +14,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "אימייל או סיסמה שגויים" }, { status: 401 });
   }
   const token = await createCustomerSession(customer.id, customer.email);
-  await setCustomerCookie(token);
+  await setCustomerCookie(token, remember !== false);
   return NextResponse.json({ ok: true, name: customer.name });
 }
