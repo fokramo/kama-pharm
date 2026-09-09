@@ -65,7 +65,7 @@ export default function Header() {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 40, background: "#fff", borderBottom: "1px solid var(--line)" }}>
       {/* top promo bar */}
-      <div style={{ background: "linear-gradient(90deg,var(--brand-700),var(--brand-600))", color: "#fff", fontSize: 13 }}>
+      <div className="promo-bar" style={{ background: "linear-gradient(90deg,var(--brand-700),var(--brand-600))", color: "#fff", fontSize: 13 }}>
         <div className="container-x" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 34 }}>
           <span>🚚 משלוח חינם בקנייה מעל ₪199</span>
           <a href="tel:*6600" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -75,13 +75,13 @@ export default function Header() {
       </div>
 
       {/* main row */}
-      <div className="container-x" style={{ display: "flex", alignItems: "center", gap: 18, height: 72 }}>
+      <div className="container-x hdr-row" style={{ display: "flex", alignItems: "center", gap: 18, height: 72 }}>
         <Link href="/" aria-label="קמא פארם" style={{ flexShrink: 0 }}>
           <Logo />
         </Link>
 
         {/* search with live dropdown */}
-        <form onSubmit={submitSearch} style={{ flex: 1, maxWidth: 640, position: "relative" }}>
+        <form onSubmit={submitSearch} className="hdr-search" style={{ position: "relative" }}>
           <Search size={18} style={{ position: "absolute", insetInlineStart: 16, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
           <input
             className="input"
@@ -127,20 +127,20 @@ export default function Header() {
         </form>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginInlineStart: "auto" }}>
-          <Link href="/consult" className="btn btn-ghost hidden md:inline-flex" style={{ gap: 6 }}>
+          <Link href="/consult" className="btn btn-ghost hide-below-md" style={{ gap: 6 }}>
             <Sparkles size={16} style={{ color: "var(--brand-600)" }} /> ייעוץ AI
           </Link>
 
           {/* user menu */}
           <div
-            className="user-menu hidden sm:block"
+            className="user-menu"
             style={{ position: "relative" }}
             onMouseEnter={() => setUserOpen(true)}
             onMouseLeave={() => setUserOpen(false)}
           >
             <button className="btn btn-ghost" style={{ gap: 6 }} onClick={() => (me ? setUserOpen((v) => !v) : router.push("/account"))}>
               <User size={18} />
-              <span className="hidden lg:inline">{me ? me.name : "התחברות"}</span>
+              <span className="hide-below-md">{me ? me.name : "התחברות"}</span>
               {me && <ChevronDown size={14} />}
             </button>
 

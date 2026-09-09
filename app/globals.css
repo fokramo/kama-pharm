@@ -679,3 +679,35 @@ h1, h2, h3, h4 {
     gap: 24px !important;
   }
 }
+
+/* ============ Global mobile / responsive fixes ============ */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* visibility helpers (use !important to beat component classes like .btn) */
+@media (max-width: 767px) { .hide-below-md { display: none !important; } }
+@media (max-width: 639px) { .hide-below-sm { display: none !important; } }
+
+/* Header: stack the search onto its own full-width row on small screens */
+.hdr-search { flex: 1; max-width: 640px; }
+@media (max-width: 600px) {
+  .hdr-row {
+    flex-wrap: wrap;
+    height: auto !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    row-gap: 10px;
+    column-gap: 10px !important;
+  }
+  .hdr-search { order: 5; flex-basis: 100%; max-width: 100%; }
+  .catbar { position: static !important; }
+}
+
+/* promo bar: smaller + tidy on phones */
+@media (max-width: 480px) {
+  .promo-bar { font-size: 11.5px !important; }
+}
+
+/* checkout & other 2-col forms → single column on phones */
+@media (max-width: 640px) {
+  .form-2col { grid-template-columns: 1fr !important; }
+}

@@ -73,7 +73,7 @@ export default function CheckoutPage() {
         {/* form */}
         <form onSubmit={submit} className="card" style={{ padding: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>פרטי משלוח</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="form-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div style={{ gridColumn: "1 / -1" }}>
               <label className="label">שם מלא *</label>
               <input className="input" value={form.customerName} onChange={upd("customerName")} required />
