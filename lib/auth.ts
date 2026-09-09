@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 const COOKIE_NAME = "kama_admin";
 const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "dev-insecure-secret"
+  process.env.AUTH_SECRET || "dev-insecure-secret-change-me-kama-pharm"
 );
 
 export async function createSession(username: string): Promise<string> {

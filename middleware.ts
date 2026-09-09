@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "dev-insecure-secret"
+  process.env.AUTH_SECRET || "dev-insecure-secret-change-me-kama-pharm"
 );
 
 async function isValid(token?: string) {
