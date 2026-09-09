@@ -64,26 +64,23 @@ export default function ProductCard({ product }: { product: ProductLite }) {
         )}
         <h3 className="clamp-2" style={{ fontSize: 15, fontWeight: 600, minHeight: 40 }}>{product.name}</h3>
 
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div>
-            <span style={{ fontWeight: 800, fontSize: 18, color: "var(--brand-700)" }}>{formatPrice(product.price)}</span>
-            {discount > 0 && (
-              <span style={{ fontSize: 13, color: "var(--muted)", textDecoration: "line-through", marginInlineStart: 6 }}>
-                {formatPrice(product.compareAt!)}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={handleAdd}
-            disabled={out}
-            className="btn btn-primary"
-            style={{ padding: 9, borderRadius: 12, minWidth: 40 }}
-            aria-label="הוסף לעגלה"
-          >
-            {added ? <Check size={18} /> : <Plus size={18} />}
-          </button>
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 800, fontSize: 18, color: "var(--brand-700)" }}>{formatPrice(product.price)}</span>
+          {discount > 0 && (
+            <span style={{ fontSize: 13, color: "var(--muted)", textDecoration: "line-through" }}>
+              {formatPrice(product.compareAt!)}
+            </span>
+          )}
         </div>
-        {out && <span style={{ fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>אזל מהמלאי</span>}
+        <button
+          onClick={handleAdd}
+          disabled={out}
+          className="btn btn-primary"
+          style={{ width: "100%", marginTop: 8, padding: "10px 12px", borderRadius: 12, gap: 6 }}
+          aria-label="הוסף לעגלה"
+        >
+          {added ? <><Check size={17} /> נוסף</> : out ? "אזל מהמלאי" : <><Plus size={17} /> הוסף לסל</>}
+        </button>
       </div>
     </Link>
   );
