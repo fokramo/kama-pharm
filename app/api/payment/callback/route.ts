@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendOrderEmails } from "@/lib/email";
 
 // PayPlus server-to-server callback. Marks the order paid on success.
 // Note: in production, verify the request signature/hash from PayPlus headers.
@@ -13,10 +14,11 @@ export async function POST(req: Request) {
     if (!orderId) return NextResponse.json({ ok: false }, { status: 400 });
 
     const paid = status === "000" || status === "approved" || status === "success";
-    await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: orderId },
       data: { status: paid ? "paid" : "cancelled" },
     });
+    if (paid) await sendOrderEmails(order);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false }, { status: 200 });

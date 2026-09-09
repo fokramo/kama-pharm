@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { calcShipping } from "@/lib/format";
 import { createPaymentLink } from "@/lib/payplus";
-import { getCustomerSession } from "@/lib/customer";
+import { getCustomerSession, createCustomerSession, setCustomerCookie } from "@/lib/customer";
 
 const schema = z.object({
   customerName: z.string().min(2, "נא להזין שם מלא"),
@@ -12,6 +13,9 @@ const schema = z.object({
   city: z.string().min(2, "נא להזין עיר"),
   address: z.string().min(2, "נא להזין כתובת"),
   notes: z.string().optional(),
+  createAccount: z.boolean().optional(),
+  password: z.string().optional(),
+  marketingConsent: z.boolean().optional(),
   items: z
     .array(z.object({ id: z.string(), qty: z.number().int().positive() }))
     .min(1, "העגלה ריקה"),
@@ -64,10 +68,34 @@ export async function POST(req: Request) {
   // Link the order to the logged-in customer, if any.
   const session = await getCustomerSession();
   const email = data.email || session?.email || null;
+  let customerId = session?.id ?? null;
+
+  // Optional: create an account during guest checkout.
+  if (!session && data.createAccount && data.password && data.password.length >= 6 && email) {
+    const normalized = email.trim().toLowerCase();
+    const existing = await prisma.customer.findUnique({ where: { email: normalized } });
+    if (!existing) {
+      const passwordHash = await bcrypt.hash(data.password, 10);
+      const customer = await prisma.customer.create({
+        data: {
+          name: data.customerName,
+          email: normalized,
+          phone: data.phone,
+          city: data.city,
+          address: data.address,
+          passwordHash,
+          marketingConsent: !!data.marketingConsent,
+        },
+      });
+      customerId = customer.id;
+      const token = await createCustomerSession(customer.id, customer.email);
+      await setCustomerCookie(token);
+    }
+  }
 
   const order = await prisma.order.create({
     data: {
-      customerId: session?.id ?? null,
+      customerId,
       customerName: data.customerName,
       phone: data.phone,
       email,

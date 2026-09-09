@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { formatPrice, calcShipping, FREE_SHIPPING_OVER } from "@/lib/format";
-import { ShieldCheck, CreditCard, Loader2 } from "lucide-react";
+import { ShieldCheck, CreditCard, Loader2, UserPlus } from "lucide-react";
 
 export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
@@ -18,6 +18,23 @@ export default function CheckoutPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [password, setPassword] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(true);
+
+  // Prefill details for a logged-in customer.
+  useEffect(() => {
+    fetch("/api/account/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.customer) {
+          setLoggedIn(true);
+          setForm((f) => ({ ...f, customerName: d.customer.name, email: d.customer.email }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const shipping = calcShipping(subtotal);
   const total = subtotal + shipping;
@@ -37,6 +54,9 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          createAccount: !loggedIn && createAccount,
+          password: createAccount ? password : undefined,
+          marketingConsent,
           items: items.map((i) => ({ id: i.id, qty: i.qty })),
         }),
       });
@@ -99,6 +119,27 @@ export default function CheckoutPage() {
               <textarea className="textarea" rows={3} value={form.notes} onChange={upd("notes")} />
             </div>
           </div>
+
+          {!loggedIn && (
+            <div style={{ marginTop: 18, padding: 16, border: "1px dashed var(--brand-300)", borderRadius: 14, background: "var(--brand-50)" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", fontWeight: 700 }}>
+                <input type="checkbox" checked={createAccount} onChange={(e) => setCreateAccount(e.target.checked)} style={{ width: 18, height: 18, accentColor: "var(--brand-600)" }} />
+                <UserPlus size={17} style={{ color: "var(--brand-700)" }} /> פתחו לי חשבון למעקב הזמנות (לא חובה)
+              </label>
+              {createAccount && (
+                <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
+                  <div>
+                    <label className="label">בחרו סיסמה (6 תווים לפחות)</label>
+                    <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required={createAccount} placeholder="••••••" />
+                  </div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: 13.5, color: "var(--ink-soft)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={marketingConsent} onChange={(e) => setMarketingConsent(e.target.checked)} style={{ width: 18, height: 18, accentColor: "var(--brand-600)", marginTop: 1 }} />
+                    <span>אני מאשר/ת קבלת מבצעים והטבות בדוא״ל.</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div style={{ background: "#fef2f2", color: "var(--danger)", padding: "10px 14px", borderRadius: 10, marginTop: 16, fontSize: 14 }}>
