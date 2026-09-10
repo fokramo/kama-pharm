@@ -49,6 +49,20 @@ model Customer {
   orders           Order[]
 }
 
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String   @default("")
+  cta       String   @default("") // button text
+  href      String   @default("/products") // link target
+  emoji     String   @default("🏷️")
+  color1    String   @default("#047857") // gradient start
+  color2    String   @default("#10b981") // gradient end
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
 model Order {
   id           Int      @id @default(autoincrement()) // also the human order number
   customerId   String?

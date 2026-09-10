@@ -13,7 +13,7 @@ type Slide = {
   gradient: string;
 };
 
-const SLIDES: Slide[] = [
+const DEFAULT_SLIDES: Slide[] = [
   {
     title: "משלוח חינם עד הבית",
     subtitle: "בכל קנייה מעל ₪199 — ישירות עד הדלת תוך 1–3 ימי עסקים",
@@ -22,33 +22,10 @@ const SLIDES: Slide[] = [
     emoji: "🚚",
     gradient: "linear-gradient(120deg,#047857,#10b981)",
   },
-  {
-    title: "מבצעי החורף חוגגים!",
-    subtitle: "עד 30% הנחה על מגוון ויטמינים, טיפוח ומוצרי בריאות",
-    cta: "לכל המבצעים",
-    href: "/products?deals=1",
-    emoji: "🏷️",
-    gradient: "linear-gradient(120deg,#b91c1c,#f97316)",
-  },
-  {
-    title: "ייעוץ חכם עם בינה מלאכותית",
-    subtitle: "לא בטוחים מה מתאים לכם? היועץ החכם ימליץ בחינם ובאופן מיידי",
-    cta: "התחל ייעוץ AI",
-    href: "/consult",
-    emoji: "🤖",
-    gradient: "linear-gradient(120deg,#4338ca,#0ea5e9)",
-  },
-  {
-    title: "חיזוק מערכת החיסון",
-    subtitle: "ויטמין D, אומגה 3 ומולטי-ויטמין — לכל המשפחה",
-    cta: "לקטגוריית הויטמינים",
-    href: "/category/vitamins",
-    emoji: "🟠",
-    gradient: "linear-gradient(120deg,#0f766e,#22c55e)",
-  },
 ];
 
-export default function HeroCarousel() {
+export default function HeroCarousel({ slides }: { slides?: Slide[] }) {
+  const SLIDES = slides && slides.length ? slides : DEFAULT_SLIDES;
   const [i, setI] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const n = SLIDES.length;

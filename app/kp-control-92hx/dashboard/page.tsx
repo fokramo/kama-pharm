@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Package, Tags, ShoppingBag, LogOut, Plus, Pencil,
-  Trash2, X, Loader2, Search, TrendingUp, Clock, Boxes,
+  Trash2, X, Loader2, Search, TrendingUp, Clock, Boxes, Megaphone, ArrowLeft,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { formatPrice, ORDER_STATUSES } from "@/lib/format";
@@ -21,7 +21,12 @@ type Order = {
   total: number; status: string; createdAt: string;
 };
 
-type Tab = "overview" | "products" | "categories" | "orders";
+type Banner = {
+  id: string; title: string; subtitle: string; cta: string; href: string;
+  emoji: string; color1: string; color2: string; active: boolean; order: number;
+};
+
+type Tab = "overview" | "products" | "categories" | "orders" | "banners";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -29,18 +34,21 @@ export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadAll() {
     setLoading(true);
-    const [p, c, o] = await Promise.all([
+    const [p, c, o, b] = await Promise.all([
       fetch("/api/admin/products").then((r) => r.json()),
       fetch("/api/admin/categories").then((r) => r.json()),
       fetch("/api/admin/orders").then((r) => r.json()),
+      fetch("/api/admin/banners").then((r) => r.json()),
     ]);
     setProducts(p);
     setCategories(c);
     setOrders(o);
+    setBanners(b);
     setLoading(false);
   }
   useEffect(() => { loadAll(); }, []);
@@ -55,6 +63,7 @@ export default function Dashboard() {
     { key: "overview", label: "סקירה", icon: <LayoutDashboard size={18} /> },
     { key: "products", label: "מוצרים", icon: <Package size={18} /> },
     { key: "categories", label: "קטגוריות", icon: <Tags size={18} /> },
+    { key: "banners", label: "באנרים", icon: <Megaphone size={18} /> },
     { key: "orders", label: "הזמנות", icon: <ShoppingBag size={18} /> },
   ];
 
@@ -96,6 +105,7 @@ export default function Dashboard() {
           {tab === "overview" && <Overview products={products} orders={orders} categories={categories} onGo={setTab} />}
           {tab === "products" && <ProductsTab products={products} categories={categories} reload={loadAll} />}
           {tab === "categories" && <CategoriesTab categories={categories} reload={loadAll} />}
+          {tab === "banners" && <BannersTab banners={banners} reload={loadAll} />}
           {tab === "orders" && <OrdersTab orders={orders} reload={loadAll} />}
         </>
       )}
@@ -501,6 +511,146 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
 
 function Row({ k, v }: { k: string; v: string }) {
   return <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span></div>;
+}
+
+/* ---------------- Banners ---------------- */
+function BannerPreview({ b, height = 120 }: { b: Partial<Banner>; height?: number }) {
+  return (
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: 14, height, padding: "0 20px", display: "flex", alignItems: "center", background: `linear-gradient(120deg, ${b.color1 ?? "#047857"}, ${b.color2 ?? "#10b981"})` }}>
+      <div style={{ color: "#fff", zIndex: 1, maxWidth: "70%" }}>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>{b.title || "כותרת הבאנר"}</div>
+        <div style={{ fontSize: 13, opacity: 0.9, marginTop: 3 }} className="clamp-2">{b.subtitle}</div>
+        {b.cta && <span style={{ display: "inline-block", marginTop: 8, background: "#fff", color: "#0f172a", padding: "5px 14px", borderRadius: 999, fontSize: 13, fontWeight: 700 }}>{b.cta}</span>}
+      </div>
+      <div style={{ position: "absolute", insetInlineStart: 20, top: "50%", transform: "translateY(-50%)", fontSize: 56, opacity: 0.9 }}>{b.emoji}</div>
+    </div>
+  );
+}
+
+function BannersTab({ banners, reload }: { banners: Banner[]; reload: () => void }) {
+  const [editing, setEditing] = useState<Banner | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  async function toggleActive(b: Banner) {
+    await fetch(`/api/admin/banners/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ active: !b.active }) });
+    reload();
+  }
+  async function move(b: Banner, dir: number) {
+    await fetch(`/api/admin/banners/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: b.order + dir }) });
+    reload();
+  }
+  async function del(b: Banner) {
+    if (!confirm(`למחוק את הבאנר "${b.title}"?`)) return;
+    await fetch(`/api/admin/banners/${b.id}`, { method: "DELETE" });
+    reload();
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+        <p style={{ color: "var(--muted)", fontSize: 14 }}>הבאנרים המתחלפים בראש דף הבית ({banners.length})</p>
+        <button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} /> באנר חדש</button>
+      </div>
+
+      <div style={{ display: "grid", gap: 14 }}>
+        {banners.map((b) => (
+          <div key={b.id} className="card" style={{ padding: 14, opacity: b.active ? 1 : 0.55 }}>
+            <BannerPreview b={b} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
+                <span>קישור: {b.href}</span>
+                {!b.active && <span className="badge" style={{ background: "#f1f5f9", color: "#64748b" }}>מוסתר</span>}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="btn btn-ghost" style={{ padding: 8 }} onClick={() => move(b, -1)} aria-label="הזז מעלה"><ArrowLeft size={15} style={{ transform: "rotate(90deg)" }} /></button>
+                <button className="btn btn-ghost" style={{ padding: 8 }} onClick={() => move(b, 1)} aria-label="הזז מטה"><ArrowLeft size={15} style={{ transform: "rotate(-90deg)" }} /></button>
+                <button className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => toggleActive(b)}>{b.active ? "הסתר" : "הצג"}</button>
+                <button className="btn btn-ghost" style={{ padding: 8 }} onClick={() => setEditing(b)}><Pencil size={15} /></button>
+                <button className="btn btn-ghost" style={{ padding: 8, color: "var(--danger)" }} onClick={() => del(b)}><Trash2 size={15} /></button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {banners.length === 0 && (
+          <div className="card" style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>אין באנרים. הוסיפו אחד — אחרת יוצג באנר ברירת מחדל.</div>
+        )}
+      </div>
+
+      {(creating || editing) && (
+        <BannerModal banner={editing} onClose={() => { setCreating(false); setEditing(null); }} onSaved={() => { setCreating(false); setEditing(null); reload(); }} />
+      )}
+    </div>
+  );
+}
+
+function BannerModal({ banner, onClose, onSaved }: { banner: Banner | null; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    title: banner?.title ?? "",
+    subtitle: banner?.subtitle ?? "",
+    cta: banner?.cta ?? "",
+    href: banner?.href ?? "/products",
+    emoji: banner?.emoji ?? "🏷️",
+    color1: banner?.color1 ?? "#047857",
+    color2: banner?.color2 ?? "#10b981",
+    active: banner?.active ?? true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
+
+  async function save() {
+    if (!form.title) { setError("כותרת חובה"); return; }
+    setSaving(true);
+    const res = banner
+      ? await fetch(`/api/admin/banners/${banner.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) })
+      : await fetch("/api/admin/banners", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    setSaving(false);
+    if (res.ok) onSaved(); else setError((await res.json().catch(() => ({}))).error ?? "שגיאה");
+  }
+
+  const presets = [
+    ["#047857", "#10b981"], ["#b91c1c", "#f97316"], ["#4338ca", "#0ea5e9"],
+    ["#0f766e", "#22c55e"], ["#7c3aed", "#ec4899"], ["#0369a1", "#38bdf8"],
+  ];
+
+  return (
+    <ModalShell title={banner ? "עריכת באנר" : "באנר חדש"} onClose={onClose}>
+      <div style={{ marginBottom: 16 }}><BannerPreview b={form} /></div>
+      <div style={{ display: "grid", gap: 14 }}>
+        <div>
+          <label className="label">כותרת *</label>
+          <input className="input" value={form.title} onChange={(e) => set("title", e.target.value)} />
+        </div>
+        <div>
+          <label className="label">כותרת משנה</label>
+          <textarea className="textarea" rows={2} value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 90px", gap: 12 }}>
+          <div><label className="label">טקסט כפתור</label><input className="input" value={form.cta} onChange={(e) => set("cta", e.target.value)} /></div>
+          <div><label className="label">קישור</label><input className="input" value={form.href} onChange={(e) => set("href", e.target.value)} placeholder="/products" /></div>
+          <div><label className="label">אייקון</label><input className="input" value={form.emoji} onChange={(e) => set("emoji", e.target.value)} style={{ textAlign: "center", fontSize: 20 }} /></div>
+        </div>
+        <div>
+          <label className="label">צבעי רקע</label>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <input type="color" value={form.color1} onChange={(e) => set("color1", e.target.value)} style={{ width: 48, height: 40, border: "none", borderRadius: 8, cursor: "pointer" }} />
+            <input type="color" value={form.color2} onChange={(e) => set("color2", e.target.value)} style={{ width: 48, height: 40, border: "none", borderRadius: 8, cursor: "pointer" }} />
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {presets.map(([a, c], i) => (
+                <button key={i} onClick={() => { set("color1", a); set("color2", c); }} title="ערכת צבעים" style={{ width: 30, height: 30, borderRadius: 8, cursor: "pointer", border: "1px solid var(--line)", background: `linear-gradient(120deg, ${a}, ${c})` }} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <Toggle label="פעיל (מוצג באתר)" checked={form.active} onChange={(v) => set("active", v)} />
+        {error && <div style={{ background: "#fef2f2", color: "var(--danger)", padding: "9px 12px", borderRadius: 10, fontSize: 14 }}>{error}</div>}
+      </div>
+      <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={save} disabled={saving}>{saving ? <Loader2 size={18} className="spin" /> : "שמור"}</button>
+        <button className="btn btn-ghost" onClick={onClose}>ביטול</button>
+      </div>
+    </ModalShell>
+  );
 }
 
 /* ---------------- Modal shell ---------------- */

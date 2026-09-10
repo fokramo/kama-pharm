@@ -8,7 +8,7 @@ import { Sparkles, Truck, ShieldCheck, Clock, ArrowLeft } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [categories, featured] = await Promise.all([
+  const [categories, featured, banners] = await Promise.all([
     prisma.category.findMany({
       orderBy: { order: "asc" },
       include: { _count: { select: { products: true } } },
@@ -19,13 +19,23 @@ export default async function HomePage() {
       take: 12,
       orderBy: { createdAt: "desc" },
     }),
+    prisma.banner.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
   ]);
+
+  const slides = banners.map((b) => ({
+    title: b.title,
+    subtitle: b.subtitle,
+    cta: b.cta,
+    href: b.href,
+    emoji: b.emoji,
+    gradient: `linear-gradient(120deg, ${b.color1}, ${b.color2})`,
+  }));
 
   return (
     <div>
       {/* AUTO-ROTATING PROMO CAROUSEL */}
       <section className="container-x" style={{ paddingTop: 20 }}>
-        <HeroCarousel />
+        <HeroCarousel slides={slides} />
       </section>
 
       {/* CATEGORIES GRID (lead section) */}
