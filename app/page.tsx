@@ -29,6 +29,7 @@ export default async function HomePage() {
     href: b.href,
     emoji: b.emoji,
     gradient: `linear-gradient(120deg, ${b.color1}, ${b.color2})`,
+    image: b.image,
   }));
 
   return (

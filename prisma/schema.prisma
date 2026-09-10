@@ -56,6 +56,7 @@ model Banner {
   cta       String   @default("") // button text
   href      String   @default("/products") // link target
   emoji     String   @default("🏷️")
+  image     String? // optional background image (overrides gradient)
   color1    String   @default("#047857") // gradient start
   color2    String   @default("#10b981") // gradient end
   active    Boolean  @default(true)

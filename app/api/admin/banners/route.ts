@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       cta: String(b.cta ?? ""),
       href: String(b.href ?? "/products"),
       emoji: String(b.emoji ?? "🏷️"),
+      image: b.image ? String(b.image) : null,
       color1: String(b.color1 ?? "#047857"),
       color2: String(b.color2 ?? "#10b981"),
       active: b.active ?? true,

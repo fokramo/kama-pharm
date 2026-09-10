@@ -23,7 +23,7 @@ type Order = {
 
 type Banner = {
   id: string; title: string; subtitle: string; cta: string; href: string;
-  emoji: string; color1: string; color2: string; active: boolean; order: number;
+  emoji: string; image: string | null; color1: string; color2: string; active: boolean; order: number;
 };
 
 type Tab = "overview" | "products" | "categories" | "orders" | "banners";
@@ -515,14 +515,17 @@ function Row({ k, v }: { k: string; v: string }) {
 
 /* ---------------- Banners ---------------- */
 function BannerPreview({ b, height = 120 }: { b: Partial<Banner>; height?: number }) {
+  const bg = b.image
+    ? `linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.2)), url(${b.image}) center/cover no-repeat`
+    : `linear-gradient(120deg, ${b.color1 ?? "#047857"}, ${b.color2 ?? "#10b981"})`;
   return (
-    <div style={{ position: "relative", overflow: "hidden", borderRadius: 14, height, padding: "0 20px", display: "flex", alignItems: "center", background: `linear-gradient(120deg, ${b.color1 ?? "#047857"}, ${b.color2 ?? "#10b981"})` }}>
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: 14, height, padding: "0 20px", display: "flex", alignItems: "center", background: bg }}>
       <div style={{ color: "#fff", zIndex: 1, maxWidth: "70%" }}>
         <div style={{ fontWeight: 800, fontSize: 18 }}>{b.title || "כותרת הבאנר"}</div>
         <div style={{ fontSize: 13, opacity: 0.9, marginTop: 3 }} className="clamp-2">{b.subtitle}</div>
         {b.cta && <span style={{ display: "inline-block", marginTop: 8, background: "#fff", color: "#0f172a", padding: "5px 14px", borderRadius: 999, fontSize: 13, fontWeight: 700 }}>{b.cta}</span>}
       </div>
-      <div style={{ position: "absolute", insetInlineStart: 20, top: "50%", transform: "translateY(-50%)", fontSize: 56, opacity: 0.9 }}>{b.emoji}</div>
+      {!b.image && <div style={{ position: "absolute", insetInlineStart: 20, top: "50%", transform: "translateY(-50%)", fontSize: 56, opacity: 0.9 }}>{b.emoji}</div>}
     </div>
   );
 }
@@ -590,13 +593,27 @@ function BannerModal({ banner, onClose, onSaved }: { banner: Banner | null; onCl
     cta: banner?.cta ?? "",
     href: banner?.href ?? "/products",
     emoji: banner?.emoji ?? "🏷️",
+    image: banner?.image ?? "",
     color1: banner?.color1 ?? "#047857",
     color2: banner?.color2 ?? "#10b981",
     active: banner?.active ?? true,
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
+
+  async function upload(file: File) {
+    setUploading(true);
+    setError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const d = await res.json().catch(() => ({}));
+    setUploading(false);
+    if (d.url) set("image", d.url);
+    else setError(d.error ?? "שגיאה בהעלאת התמונה");
+  }
 
   async function save() {
     if (!form.title) { setError("כותרת חובה"); return; }
@@ -631,7 +648,26 @@ function BannerModal({ banner, onClose, onSaved }: { banner: Banner | null; onCl
           <div><label className="label">אייקון</label><input className="input" value={form.emoji} onChange={(e) => set("emoji", e.target.value)} style={{ textAlign: "center", fontSize: 20 }} /></div>
         </div>
         <div>
-          <label className="label">צבעי רקע</label>
+          <label className="label">תמונת רקע (לא חובה — מחליפה את הצבעים)</label>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div style={{ width: 90, height: 50, borderRadius: 8, background: "var(--surface-2)", overflow: "hidden", display: "grid", placeItems: "center", flexShrink: 0 }}>
+              {uploading ? <Loader2 size={16} className="spin" /> : form.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : "🖼️"}
+            </div>
+            <div style={{ flex: 1, display: "grid", gap: 8 }}>
+              <input className="input" placeholder="קישור לתמונה (URL) או העלאה למטה" value={form.image} onChange={(e) => set("image", e.target.value)} />
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} style={{ fontSize: 13 }} />
+                {form.image && <button onClick={() => set("image", "")} className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 12, color: "var(--danger)" }}>הסר תמונה</button>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="label">צבעי רקע (אם אין תמונה)</label>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <input type="color" value={form.color1} onChange={(e) => set("color1", e.target.value)} style={{ width: 48, height: 40, border: "none", borderRadius: 8, cursor: "pointer" }} />
             <input type="color" value={form.color2} onChange={(e) => set("color2", e.target.value)} style={{ width: 48, height: 40, border: "none", borderRadius: 8, cursor: "pointer" }} />

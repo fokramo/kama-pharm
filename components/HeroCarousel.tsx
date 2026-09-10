@@ -11,6 +11,7 @@ type Slide = {
   href: string;
   emoji: string;
   gradient: string;
+  image?: string | null;
 };
 
 const DEFAULT_SLIDES: Slide[] = [
@@ -55,7 +56,13 @@ export default function HeroCarousel({ slides }: { slides?: Slide[] }) {
         <div
           key={idx}
           className="hero-slide"
-          style={{ background: s.gradient, opacity: idx === i ? 1 : 0, pointerEvents: idx === i ? "auto" : "none" }}
+          style={{
+            background: s.image
+              ? `linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.2)), url(${s.image}) center/cover no-repeat`
+              : s.gradient,
+            opacity: idx === i ? 1 : 0,
+            pointerEvents: idx === i ? "auto" : "none",
+          }}
           aria-hidden={idx !== i}
         >
           <div style={{ position: "relative", zIndex: 1, maxWidth: 560 }}>
@@ -65,7 +72,7 @@ export default function HeroCarousel({ slides }: { slides?: Slide[] }) {
               {s.cta} <ArrowLeft size={17} />
             </Link>
           </div>
-          <div className="hero-slide-emoji">{s.emoji}</div>
+          {!s.image && <div className="hero-slide-emoji">{s.emoji}</div>}
         </div>
       ))}
 

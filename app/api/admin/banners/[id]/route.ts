@@ -16,6 +16,7 @@ export async function PUT(
         ...(b.cta != null && { cta: String(b.cta) }),
         ...(b.href != null && { href: String(b.href) }),
         ...(b.emoji != null && { emoji: String(b.emoji) }),
+        ...("image" in b && { image: b.image ? String(b.image) : null }),
         ...(b.color1 != null && { color1: String(b.color1) }),
         ...(b.color2 != null && { color2: String(b.color2) }),
         ...(b.active != null && { active: Boolean(b.active) }),
